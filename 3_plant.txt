@@ -1,0 +1,119 @@
+//Use any dataset of plant disease and design a plant disease detection system using CNN.
+
+!pip install tensorflow==2.10.0
+!pip install keras==2.10.0
+!pip install tensorflow-datasets
+
+
+from tensorflow import keras
+
+from sklearn.metrics import *
+
+import warnings
+warnings.filterwarnings("ignore")
+import tensorflow as tf
+import matplotlib.pyplot as plt
+tf.compat.v1.set_random_seed(0)
+from tensorflow import keras
+import numpy as np
+np.random.seed(0)
+import itertools
+from keras.preprocessing.image import image_dataset_from_directory
+from tensorflow.keras.layers.experimental.preprocessing import Rescaling
+
+train_gen = image_dataset_from_directory(directory="../input/new-plant-diseases-dataset/New Plant Diseases Dataset(Augmented)/New Plant Diseases Dataset(Augmented)/train",
+                                         image_size=(256, 256))
+test_gen = image_dataset_from_directory(directory="../input/new-plant-diseases-dataset/New Plant Diseases Dataset(Augmented)/New Plant Diseases Dataset(Augmented)/valid",
+                                        image_size=(256, 256))
+
+rescale = Rescaling(scale=1.0/255)
+train_gen = train_gen.map(lambda image,label:(rescale(image),label))
+test_gen  = test_gen.map(lambda image,label:(rescale(image),label))
+
+
+model = keras.Sequential()
+
+model.add(keras.layers.Conv2D(32,(3,3),activation="relu",padding="same",input_shape=(256,256,3)))
+model.add(keras.layers.Conv2D(32,(3,3),activation="relu",padding="same"))
+model.add(keras.layers.MaxPooling2D(3,3))
+
+model.add(keras.layers.Conv2D(64,(3,3),activation="relu",padding="same"))
+model.add(keras.layers.Conv2D(64,(3,3),activation="relu",padding="same"))
+model.add(keras.layers.MaxPooling2D(3,3))
+
+model.add(keras.layers.Conv2D(128,(3,3),activation="relu",padding="same"))
+model.add(keras.layers.Conv2D(128,(3,3),activation="relu",padding="same"))
+model.add(keras.layers.MaxPooling2D(3,3))
+
+model.add(keras.layers.Conv2D(256,(3,3),activation="relu",padding="same"))
+model.add(keras.layers.Conv2D(256,(3,3),activation="relu",padding="same"))
+
+model.add(keras.layers.Conv2D(512,(5,5),activation="relu",padding="same"))
+model.add(keras.layers.Conv2D(512,(5,5),activation="relu",padding="same"))
+
+model.add(keras.layers.Flatten())
+
+model.add(keras.layers.Dense(1568,activation="relu"))
+model.add(keras.layers.Dropout(0.5))
+
+model.add(keras.layers.Dense(38,activation="softmax"))
+
+opt = keras.optimizers.Adam(learning_rate=0.0001)
+model.compile(optimizer=opt,loss="sparse_categorical_crossentropy",metrics=['accuracy'])
+model.summary()
+
+
+
+ep = 10
+history = model.fit_generator(train_gen,
+          validation_data=test_gen,
+          epochs = ep)
+
+plt.figure(figsize = (20,5))
+plt.subplot(1,2,1)
+plt.title("Train and Validation Loss")
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
+plt.plot(history.history['loss'],label="Train Loss")
+plt.plot(history.history['val_loss'], label="Validation Loss")
+plt.xlim(0, 10)
+plt.ylim(0.0,1.0)
+plt.legend()
+
+
+
+
+
+
+
+
+
+
+
+
+
+Sure, here's a simple theoretical explanation of the code you provided:
+
+The code is implementing a plant disease detection system using Convolutional Neural Networks (CNNs), a type of deep learning model particularly effective for image classification tasks like this.
+
+1. **Data Preparation**: The dataset used here contains images of plants affected by various diseases. It's divided into training and testing sets (`train_gen` and `test_gen`).
+
+2. **Model Architecture**:
+   - The CNN model is built using the Keras Sequential API.
+   - It starts with a series of convolutional layers (`Conv2D`) with rectified linear unit (ReLU) activation, followed by max-pooling layers (`MaxPooling2D`). This combination helps extract important features from the images while reducing spatial dimensions.
+   - The number of filters increases progressively through the layers, allowing the model to learn increasingly complex patterns.
+   - Dropout layers (`Dropout`) are added to prevent overfitting by randomly dropping a fraction of the connections during training.
+   - The final layer is a dense layer with softmax activation, which outputs probabilities for each class of plant disease.
+
+3. **Model Compilation**:
+   - The model is compiled using the Adam optimizer with a specified learning rate and sparse categorical cross-entropy loss function.
+   - Accuracy is chosen as the metric to monitor during training.
+
+4. **Training**:
+   - The model is trained using the `fit_generator` method, which takes in the training generator (`train_gen`) and validation generator (`test_gen`) along with the number of epochs (`ep`).
+   - During training, the model learns to classify plant disease images by adjusting its internal parameters (weights) based on the provided training data.
+
+5. **Evaluation**:
+   - After training, the training and validation loss over epochs are plotted to visualize the learning process and check for overfitting. This is done using matplotlib.
+
+Overall, this code sets up a CNN-based plant disease detection system, trains it on the provided dataset, and visualizes the training and validation performance.
